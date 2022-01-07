@@ -1,6 +1,6 @@
 CC = g++  # C compiler
-CFLAGS = -fPIC -Wall -Wextra -O3 -g -I/opt/cuda/include/ -DTRITON_ENABLE_GPU
-LDFLAGS = -lcuda -lcudart -lrt -shared
+CFLAGS = -Wall -Wextra -O3 -g -I/opt/cuda/include/ -DTRITON_ENABLE_GPU
+LDFLAGS = -L/opt/cuda/targets/x86_64-linux/lib/ -lcuda -lcudart -lrt -shared
 RM = rm -f   # rm command
 TARGET_LIB = libcudasharedmemory.so
 
@@ -10,16 +10,8 @@ OBJS = $(SRCS:.cc=.o)
 .PHONY: all
 all: ${TARGET_LIB}
 
-$(TARGET_LIB): $(OBJS)
-	$(CC) -shared -fPIC $(LDFLAGS) -o $@ $^
-
-$(OBJS): $(SRCS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
-
-$(SRCS:.cc=.d):%.d:%.cc
-	$(CC) $(CFLAGS) -MM $< >$@
-
-include $(SRCS:.cc=.d)
+$(TARGET_LIB): $(SRCS)
+	$(CC) -shared $(CFLAGS) $(LDFLAGS) -o $@ $^
 
 .PHONY: clean
 clean:

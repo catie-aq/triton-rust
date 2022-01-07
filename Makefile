@@ -4,3 +4,4 @@ clean:
 build:
 	maturin build --release --manylinux=off
 
+all: build

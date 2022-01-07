@@ -1,8 +1,13 @@
+#![allow(non_upper_case_globals)]
+#![allow(non_camel_case_types)]
+#![allow(non_snake_case)]
+
 use inference::grpc_inference_service_client::GrpcInferenceServiceClient;
 use inference::{ServerLiveRequest, ServerReadyRequest, ModelReadyRequest};
 use inference::{InferParameter, ModelInferRequest, ModelInferResponse};
 use inference::{ModelMetadataRequest, ModelMetadataResponse};
 use inference::model_infer_request::{InferInputTensor, InferRequestedOutputTensor};
+use inference::{CudaSharedMemoryRegisterRequest, CudaSharedMemoryRegisterResponse};
 
 use std;
 use std::error::Error;
@@ -10,7 +15,7 @@ use std::vec::Vec;
 use std::collections::HashMap;
 use ndarray::{Array, Array3};
 
-include!(concat!(env!("OUT_DIR"), "/shared_memory_binding.rs"));
+pub mod shared_memory;
 
 pub mod inference {
     tonic::include_proto!("inference");
@@ -20,14 +25,10 @@ pub struct TritonInference {
     client: GrpcInferenceServiceClient<tonic::transport::Channel>
 }
 
-pub struct CudaSharedMemoryRegionHandle {
-    handle: *mut i32
-}
-
 impl TritonInference {
     pub async fn connect(address: &'static str) -> Result<Self, Box<dyn Error>> {
 
-        let mut client = GrpcInferenceServiceClient::connect(address).await?;
+        let client = GrpcInferenceServiceClient::connect(address).await?;
 
         Ok(TritonInference {
             client: client,
@@ -73,17 +74,7 @@ impl TritonInference {
         Ok(response.get_ref().clone())
     }
 
-    pub async fn infer(&mut self, model_name: &str, model_version: &str, request_id: &str, inputs_vec: Vec<InferInputTensor>) -> Result<ModelInferResponse,  Box<dyn Error>> {
-
-        let rand_image = Array3::<f64>::zeros((3, 512, 512));
-        let mut tensor_bytes = Vec::<u8>::with_capacity(rand_image.shape().iter().product::<usize>() * 4);
-        for float in rand_image.iter() {
-            tensor_bytes.extend_from_slice(&float.to_le_bytes());
-        }
-
-
-        let mut input_content = Vec::<Vec<u8>>::with_capacity(1);
-        input_content.push(tensor_bytes);
+    pub async fn infer(&mut self, model_name: &str, model_version: &str, request_id: &str, inputs_vec: Vec<InferInputTensor>, input_content: Vec<Vec<u8>>) -> Result<ModelInferResponse,  Box<dyn Error>> {
 
         let request = tonic::Request::new(
             ModelInferRequest {
@@ -103,11 +94,31 @@ impl TritonInference {
         Ok(response.get_ref().clone())
     }
 
-    pub fn cuda_shared_memory_region_create(&mut self, region_name: &str, region_size: usize, device_id: usize) -> Result<CudaSharedMemoryRegionHandle,  Box<dyn Error>> {
-        unsafe {
-            let mut handle: *mut i32 = std::ptr::null_mut();
-            let handle_ptr: *mut *mut i32 = &mut handle;
+    pub fn get_input_content_vector(&mut self, input_array: &Array3<f64>) -> Vec<u8> {
 
+        let mut tensor_bytes = Vec::<u8>::with_capacity(input_array.shape().iter().product::<usize>() * 4);
+        for float in input_array.iter() {
+            tensor_bytes.extend_from_slice(&float.to_le_bytes());
+        }
 
-            // convert parameters to cstyle
+        tensor_bytes
+    }
+
+    pub async fn new_cuda_shared_memory(&mut self, name: &'static str, device_id: i64, size: u64) -> Result<shared_memory::CudaSharedMemoryRegionHandle,  Box<dyn Error>> {
+
+        let mut cuda_handle = shared_memory::CudaSharedMemoryRegionHandle::create(name, size, device_id);
+        let cuda_raw_handle = cuda_handle.get_raw_handle();
+
+        let request = tonic::Request::new(
+            CudaSharedMemoryRegisterRequest {
+                name: name.to_string(),
+                raw_handle: cuda_raw_handle,
+                device_id: device_id.try_into().unwrap(),
+                byte_size: size
+            }
+        );
+
+        let response = self.client.cuda_shared_memory_register(request).await?;
+        Ok(cuda_handle)
+    }
 }
