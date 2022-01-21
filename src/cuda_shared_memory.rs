@@ -3,9 +3,8 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
 
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 use std::os::raw::{c_void, c_char};
-use std::mem;
 
 include!(concat!(env!("OUT_DIR"), "/shared_memory_binding.rs"));
 
@@ -35,23 +34,41 @@ impl CudaSharedMemoryRegionHandle {
         }
     }
 
+    pub fn from_ptr(triton_shm_name: &'static str, ptr: *mut c_void) -> Self {
+
+        CudaSharedMemoryRegionHandle {
+            name: triton_shm_name.to_string(),
+            handle: ptr,
+        }
+    }
+
+    pub fn get_name(&mut self) -> String {
+        self.name.clone()
+    }
+
     pub fn get_raw_handle(&mut self) -> Vec<u8> {
-        let mut raw_handle = Vec::<i8>::with_capacity(32); // check the size of the struct
-        let mut buffer: *mut i8 = raw_handle.as_mut_ptr();
+
+        let mut raw_handle_ptr: *mut c_char = std::ptr::null_mut();
 
         let result = unsafe {
             CudaSharedMemoryGetRawHandle(
                 self.handle,
-                &mut buffer
+                &mut raw_handle_ptr
             )
         };
 
-        println!("{:?}", result);
+        let raw_handle_str = unsafe { CString::from_raw(raw_handle_ptr) };
+        let raw_handle = raw_handle_str.into_bytes();
 
-        let converted_handle: Vec<u8> = unsafe {
-            mem::transmute::<Vec<i8>, Vec<u8>>(raw_handle)
+        raw_handle
+    }
+
+    pub fn destroy(&mut self) {
+
+        let result = unsafe {
+            CudaSharedMemoryRegionDestroy(
+                self.handle
+            )
         };
-
-        converted_handle
     }
 }

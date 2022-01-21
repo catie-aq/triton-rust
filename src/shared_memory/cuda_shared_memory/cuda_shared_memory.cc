@@ -213,5 +213,3 @@ CudaSharedMemoryRegionDestroy(void* cuda_shm_handle)
 
   return 0;
 }
-
-//==============================================================================
