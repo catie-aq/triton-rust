@@ -21,6 +21,9 @@ use std::collections::HashMap;
 use std::mem;
 use ndarray::{Array, Array3, Array4};
 
+use tokio::runtime::Runtime;
+use crossbeam_channel::bounded;
+
 pub mod cuda_shared_memory;
 pub mod system_shared_memory;
 
@@ -29,36 +32,66 @@ pub mod inference {
 }
 
 pub struct TritonInference {
+    rt: Runtime,
     client: GrpcInferenceServiceClient<tonic::transport::Channel>
 }
 
 impl TritonInference {
-    pub async fn connect(address: &'static str) -> Result<Self, Box<dyn Error>> {
+    pub fn connect(address: &'static str) -> Result<Self, Box<dyn Error>> {
 
-        let client = GrpcInferenceServiceClient::connect(address).await?;
+        let rt  = Runtime::new().unwrap();
+        let (tx, rx) = bounded(1);
+
+        rt.block_on(async {
+            let resp = GrpcInferenceServiceClient::connect(address).await;
+            tx.send(resp);
+        });
+        let client = rx.recv().unwrap().unwrap();
 
         Ok(TritonInference {
+            rt: rt,
             client: client,
         })
     }
 
-    pub async fn is_server_live(&mut self) -> Result<bool,  Box<dyn Error>> {
+    pub fn is_server_live(&mut self) -> Result<bool,  Box<dyn Error>> {
         let request = tonic::Request::new(ServerLiveRequest {});
-        let response = self.client.server_live(request).await?;
+
+        let (tx, rx) = bounded(1);
+        self.rt.block_on(async {
+            let resp = self.client.server_live(request).await;
+            tx.send(resp);
+        });
+
+        let response = rx.recv().unwrap().unwrap();
 
         Ok(response.get_ref().live)
     }
 
-    pub async fn is_server_ready(&mut self) -> Result<bool,  Box<dyn Error>> {
+    pub fn is_server_ready(&mut self) -> Result<bool,  Box<dyn Error>> {
         let request = tonic::Request::new(ServerReadyRequest {});
-        let response = self.client.server_ready(request).await?;
+
+        let (tx, rx) = bounded(1);
+        self.rt.block_on(async {
+            let resp = self.client.server_ready(request).await;
+            tx.send(resp);
+        });
+
+        let response = rx.recv().unwrap().unwrap();
 
         Ok(response.get_ref().ready)
     }
 
-    pub async fn is_model_ready(&mut self, model_name: &str, version_number: &str) -> Result<bool,  Box<dyn Error>> {
+    pub fn is_model_ready(&mut self, model_name: &str, version_number: &str) -> Result<bool,  Box<dyn Error>> {
         let request = tonic::Request::new(ModelReadyRequest {name: model_name.to_string(), version: version_number.to_string()});
-        let response = self.client.model_ready(request).await?;
+
+        let (tx, rx) = bounded(1);
+        self.rt.block_on(async {
+            let resp = self.client.model_ready(request).await;
+            tx.send(resp);
+        });
+
+        let response = rx.recv().unwrap().unwrap();
 
         Ok(response.get_ref().ready)
     }
@@ -82,14 +115,21 @@ impl TritonInference {
         }
     }
 
-    pub async fn get_model_metadata(&mut self, model_name: &str, model_version: &str) -> Result<ModelMetadataResponse,  Box<dyn Error>> {
+    pub fn get_model_metadata(&mut self, model_name: &str, model_version: &str) -> Result<ModelMetadataResponse,  Box<dyn Error>> {
         let request = tonic::Request::new(ModelMetadataRequest {name: model_name.to_string(), version: model_version.to_string()});
-        let response = self.client.model_metadata(request).await?;
+
+        let (tx, rx) = bounded(1);
+        self.rt.block_on(async {
+            let resp = self.client.model_metadata(request).await;
+            tx.send(resp);
+        });
+
+        let response = rx.recv().unwrap().unwrap();
 
         Ok(response.get_ref().clone())
     }
 
-    pub async fn infer(&mut self, model_name: &str, model_version: &str, request_id: &str, inputs_vec: Vec<InferInputTensor>, outputs_vec: Vec<InferRequestedOutputTensor>, input_content: Vec<Vec<u8>>) -> Result<ModelInferResponse,  Box<dyn Error>> {
+    pub fn infer(&mut self, model_name: &str, model_version: &str, request_id: &str, inputs_vec: Vec<InferInputTensor>, outputs_vec: Vec<InferRequestedOutputTensor>, input_content: Vec<Vec<u8>>) -> Result<ModelInferResponse,  Box<dyn Error>> {
 
         let request = tonic::Request::new(
             ModelInferRequest {
@@ -104,7 +144,13 @@ impl TritonInference {
             }
         );
 
-        let response = self.client.model_infer(request).await?;
+        let (tx, rx) = bounded(1);
+        self.rt.block_on(async {
+            let resp = self.client.model_infer(request).await;
+            tx.send(resp);
+        });
+
+        let response = rx.recv().unwrap().unwrap();
 
         Ok(response.get_ref().clone())
     }
@@ -119,7 +165,7 @@ impl TritonInference {
         tensor_bytes
     }
 
-    pub async fn create_cuda_shared_memory(&mut self, name: &'static str, size: u64, device_id: i64) -> Result<cuda_shared_memory::CudaSharedMemoryRegionHandle,  Box<dyn Error>> {
+    pub fn create_cuda_shared_memory(&mut self, name: &'static str, size: u64, device_id: i64) -> Result<cuda_shared_memory::CudaSharedMemoryRegionHandle,  Box<dyn Error>> {
 
         let mut cuda_handle = cuda_shared_memory::CudaSharedMemoryRegionHandle::create(name, size, device_id);
         let cuda_raw_handle = cuda_handle.get_raw_handle();
@@ -133,11 +179,18 @@ impl TritonInference {
             }
         );
 
-        let response = self.client.cuda_shared_memory_register(request).await?;
+        let (tx, rx) = bounded(1);
+        self.rt.block_on(async {
+            let resp = self.client.cuda_shared_memory_register(request).await;
+            tx.send(resp);
+        });
+
+        let response = rx.recv().unwrap().unwrap();
+
         Ok(cuda_handle)
     }
 
-    pub async fn cuda_shared_memory_status(&mut self, name: &'static str) -> Result<CudaSharedMemoryStatusResponse,  Box<dyn Error>> {
+    pub fn cuda_shared_memory_status(&mut self, name: &'static str) -> Result<CudaSharedMemoryStatusResponse,  Box<dyn Error>> {
 
         let request = tonic::Request::new(
             CudaSharedMemoryStatusRequest {
@@ -145,12 +198,18 @@ impl TritonInference {
             }
         );
 
-        let response = self.client.cuda_shared_memory_status(request).await?;
+        let (tx, rx) = bounded(1);
+        self.rt.block_on(async {
+            let resp = self.client.cuda_shared_memory_status(request).await;
+            tx.send(resp);
+        });
+
+        let response = rx.recv().unwrap().unwrap();
 
         Ok(response.get_ref().clone())
     }
 
-    pub async fn unregister_cuda_shared_memory(&mut self, name: &'static str) -> Result<CudaSharedMemoryUnregisterResponse,  Box<dyn Error>> {
+    pub fn unregister_cuda_shared_memory(&mut self, name: &'static str) -> Result<CudaSharedMemoryUnregisterResponse,  Box<dyn Error>> {
 
         let request = tonic::Request::new(
             CudaSharedMemoryUnregisterRequest {
@@ -158,12 +217,18 @@ impl TritonInference {
             }
         );
 
-        let response = self.client.cuda_shared_memory_unregister(request).await?;
+        let (tx, rx) = bounded(1);
+        self.rt.block_on(async {
+            let resp = self.client.cuda_shared_memory_unregister(request).await;
+            tx.send(resp).unwrap();
+        });
+
+        let response = rx.recv().unwrap().unwrap();
 
         Ok(response.get_ref().clone())
     }
 
-    pub async fn create_system_shared_memory(&mut self, name: &'static str, key: &'static str, size: u64) -> Result<system_shared_memory::SystemSharedMemoryRegionHandle,  Box<dyn Error>> {
+    pub fn create_system_shared_memory(&mut self, name: &'static str, key: &'static str, size: u64) -> Result<system_shared_memory::SystemSharedMemoryRegionHandle,  Box<dyn Error>> {
 
         let mut shm_handle = system_shared_memory::SystemSharedMemoryRegionHandle::create(name, key, size);
 
@@ -176,11 +241,18 @@ impl TritonInference {
             }
         );
 
-        let response = self.client.system_shared_memory_register(request).await?;
+        let (tx, rx) = bounded(1);
+        self.rt.block_on(async {
+            let resp = self.client.system_shared_memory_register(request).await;
+            tx.send(resp);
+        });
+
+        let response = rx.recv().unwrap().unwrap();
+
         Ok(shm_handle)
     }
 
-    pub async fn system_shared_memory_status(&mut self, name: &'static str) -> Result<SystemSharedMemoryStatusResponse,  Box<dyn Error>> {
+    pub fn system_shared_memory_status(&mut self, name: &'static str) -> Result<SystemSharedMemoryStatusResponse,  Box<dyn Error>> {
 
         let request = tonic::Request::new(
             SystemSharedMemoryStatusRequest {
@@ -188,12 +260,18 @@ impl TritonInference {
             }
         );
 
-        let response = self.client.system_shared_memory_status(request).await?;
+        let (tx, rx) = bounded(1);
+        self.rt.block_on(async {
+            let resp = self.client.system_shared_memory_status(request).await;
+            tx.send(resp);
+        });
+
+        let response = rx.recv().unwrap().unwrap();
 
         Ok(response.get_ref().clone())
     }
 
-    pub async fn unregister_system_shared_memory(&mut self, name: &'static str) -> Result<SystemSharedMemoryUnregisterResponse,  Box<dyn Error>> {
+    pub fn unregister_system_shared_memory(&mut self, name: &'static str) -> Result<SystemSharedMemoryUnregisterResponse,  Box<dyn Error>> {
 
         let request = tonic::Request::new(
             SystemSharedMemoryUnregisterRequest {
@@ -201,7 +279,13 @@ impl TritonInference {
             }
         );
 
-        let response = self.client.system_shared_memory_unregister(request).await?;
+        let (tx, rx) = bounded(1);
+        self.rt.block_on(async {
+            let resp = self.client.system_shared_memory_unregister(request).await;
+            tx.send(resp).unwrap();
+        });
+
+        let response = rx.recv().unwrap().unwrap();
 
         Ok(response.get_ref().clone())
     }
