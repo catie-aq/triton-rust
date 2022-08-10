@@ -19,7 +19,7 @@ use std::error::Error;
 use std::vec::Vec;
 use std::collections::HashMap;
 use std::mem;
-use ndarray::{Array, Array3, Array4};
+use ndarray::{Array3, Array4};
 
 use tokio::runtime::Runtime;
 use crossbeam_channel::bounded;
@@ -44,7 +44,7 @@ impl TritonInference {
 
         rt.block_on(async {
             let resp = GrpcInferenceServiceClient::connect(address).await;
-            tx.send(resp);
+            tx.send(resp).unwrap();
         });
         let client = rx.recv().unwrap().unwrap();
 
@@ -60,7 +60,7 @@ impl TritonInference {
         let (tx, rx) = bounded(1);
         self.rt.block_on(async {
             let resp = self.client.server_live(request).await;
-            tx.send(resp);
+            tx.send(resp).unwrap();
         });
 
         let response = rx.recv().unwrap().unwrap();
@@ -74,7 +74,7 @@ impl TritonInference {
         let (tx, rx) = bounded(1);
         self.rt.block_on(async {
             let resp = self.client.server_ready(request).await;
-            tx.send(resp);
+            tx.send(resp).unwrap();
         });
 
         let response = rx.recv().unwrap().unwrap();
@@ -88,7 +88,7 @@ impl TritonInference {
         let (tx, rx) = bounded(1);
         self.rt.block_on(async {
             let resp = self.client.model_ready(request).await;
-            tx.send(resp);
+            tx.send(resp).unwrap();
         });
 
         let response = rx.recv().unwrap().unwrap();
@@ -121,7 +121,7 @@ impl TritonInference {
         let (tx, rx) = bounded(1);
         self.rt.block_on(async {
             let resp = self.client.model_metadata(request).await;
-            tx.send(resp);
+            tx.send(resp).unwrap();
         });
 
         let response = rx.recv().unwrap().unwrap();
@@ -147,7 +147,7 @@ impl TritonInference {
         let (tx, rx) = bounded(1);
         self.rt.block_on(async {
             let resp = self.client.model_infer(request).await;
-            tx.send(resp);
+            tx.send(resp).unwrap();
         });
 
         let response = rx.recv().unwrap().unwrap();
@@ -182,10 +182,10 @@ impl TritonInference {
         let (tx, rx) = bounded(1);
         self.rt.block_on(async {
             let resp = self.client.cuda_shared_memory_register(request).await;
-            tx.send(resp);
+            tx.send(resp).unwrap();
         });
 
-        let response = rx.recv().unwrap().unwrap();
+        let _response = rx.recv().unwrap().unwrap();
 
         Ok(cuda_handle)
     }
@@ -201,7 +201,7 @@ impl TritonInference {
         let (tx, rx) = bounded(1);
         self.rt.block_on(async {
             let resp = self.client.cuda_shared_memory_status(request).await;
-            tx.send(resp);
+            tx.send(resp).unwrap();
         });
 
         let response = rx.recv().unwrap().unwrap();
@@ -230,7 +230,7 @@ impl TritonInference {
 
     pub fn create_system_shared_memory(&mut self, name: &'static str, key: &'static str, size: u64) -> Result<system_shared_memory::SystemSharedMemoryRegionHandle,  Box<dyn Error>> {
 
-        let mut shm_handle = system_shared_memory::SystemSharedMemoryRegionHandle::create(name, key, size);
+        let shm_handle = system_shared_memory::SystemSharedMemoryRegionHandle::create(name, key, size);
 
         let request = tonic::Request::new(
             SystemSharedMemoryRegisterRequest {
@@ -244,10 +244,10 @@ impl TritonInference {
         let (tx, rx) = bounded(1);
         self.rt.block_on(async {
             let resp = self.client.system_shared_memory_register(request).await;
-            tx.send(resp);
+            tx.send(resp).unwrap();
         });
 
-        let response = rx.recv().unwrap().unwrap();
+        let _response = rx.recv().unwrap().unwrap();
 
         Ok(shm_handle)
     }
@@ -263,7 +263,7 @@ impl TritonInference {
         let (tx, rx) = bounded(1);
         self.rt.block_on(async {
             let resp = self.client.system_shared_memory_status(request).await;
-            tx.send(resp);
+            tx.send(resp).unwrap();
         });
 
         let response = rx.recv().unwrap().unwrap();

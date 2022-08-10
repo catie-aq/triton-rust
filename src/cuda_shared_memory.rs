@@ -3,7 +3,7 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
 
-use std::ffi::{CStr, CString};
+use std::ffi::{CString};
 use std::os::raw::{c_void, c_char};
 
 include!(concat!(env!("OUT_DIR"), "/shared_memory_binding.rs"));
@@ -19,7 +19,7 @@ impl CudaSharedMemoryRegionHandle {
         let c_triton_shm_name = CString::new(triton_shm_name).unwrap();
         let mut handle: *mut c_void = std::ptr::null_mut();
 
-        let result = unsafe {
+        let _result = unsafe {
             CudaSharedMemoryRegionCreate(
                 c_triton_shm_name.as_ptr(),
                 size,
@@ -50,7 +50,7 @@ impl CudaSharedMemoryRegionHandle {
 
         let mut raw_handle_ptr: *mut c_char = std::ptr::null_mut();
 
-        let result = unsafe {
+        let _result = unsafe {
             CudaSharedMemoryGetRawHandle(
                 self.handle,
                 &mut raw_handle_ptr
@@ -58,14 +58,17 @@ impl CudaSharedMemoryRegionHandle {
         };
 
         let raw_handle_str = unsafe { CString::from_raw(raw_handle_ptr) };
+        println!("{:?}", raw_handle_str);
         let raw_handle = raw_handle_str.into_bytes();
+        println!("{:?}", raw_handle);
+        println!("{:?}", raw_handle.len());
 
         raw_handle
     }
 
     pub fn destroy(&mut self) {
 
-        let result = unsafe {
+        let _result = unsafe {
             CudaSharedMemoryRegionDestroy(
                 self.handle
             )

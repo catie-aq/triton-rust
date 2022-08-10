@@ -3,12 +3,12 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
 
-use std::ffi::{CStr, CString};
+use std::ffi::{CString};
 use std::os::raw::{c_void, c_char, c_int};
 use std::mem;
 use std::slice;
 
-use ndarray::{Array, Array3, Array4};
+use ndarray::{Array2, Array3, Array4};
 
 include!(concat!(env!("OUT_DIR"), "/shared_memory_binding.rs"));
 
@@ -25,7 +25,7 @@ impl SystemSharedMemoryRegionHandle {
         let c_shm_key = CString::new(shm_key).unwrap();
         let mut handle: *mut c_void = std::ptr::null_mut();
 
-        let result = unsafe {
+        let _result = unsafe {
             SharedMemoryRegionCreate(
                 c_triton_shm_name.as_ptr(),
                 c_shm_key.as_ptr(),
@@ -46,18 +46,70 @@ impl SystemSharedMemoryRegionHandle {
     }
 
     pub fn destroy(&mut self) {
-        let result = unsafe {
+        let _result = unsafe {
             SharedMemoryRegionDestroy(
                 self.handle
             )
         };
     }
 
-    pub fn copy_array(&mut self, array: &Array4<f32>) {
+    pub fn copy_array_4(&mut self, array: &Array4<f32>) {
 
         let byte_size = array.shape().iter().product::<usize>() * mem::size_of::<f32>();
 
-        let result = unsafe { SharedMemoryRegionSet(
+        let _result = unsafe { SharedMemoryRegionSet(
+                self.handle,
+                0,
+                byte_size as u64,
+                array.as_ptr() as *const c_void
+            )
+        };
+    }
+
+    pub fn copy_array_3(&mut self, array: &Array3<f32>) {
+
+        let byte_size = array.shape().iter().product::<usize>() * mem::size_of::<f32>();
+
+        let _result = unsafe { SharedMemoryRegionSet(
+                self.handle,
+                0,
+                byte_size as u64,
+                array.as_ptr() as *const c_void
+            )
+        };
+    }
+
+    pub fn copy_array_2(&mut self, array: &Array2<f32>) {
+
+        let byte_size = array.shape().iter().product::<usize>() * mem::size_of::<f32>();
+
+        let _result = unsafe { SharedMemoryRegionSet(
+                self.handle,
+                0,
+                byte_size as u64,
+                array.as_ptr() as *const c_void
+            )
+        };
+    }
+
+    pub fn copy_array_3_int(&mut self, array: &Array3<i64>) {
+
+        let byte_size = array.shape().iter().product::<usize>() * mem::size_of::<i64>();
+
+        let _result = unsafe { SharedMemoryRegionSet(
+                self.handle,
+                0,
+                byte_size as u64,
+                array.as_ptr() as *const c_void
+            )
+        };
+    }
+
+    pub fn copy_array_2_int(&mut self, array: &Array2<i64>) {
+
+        let byte_size = array.shape().iter().product::<usize>() * mem::size_of::<i64>();
+
+        let _result = unsafe { SharedMemoryRegionSet(
                 self.handle,
                 0,
                 byte_size as u64,
@@ -69,12 +121,12 @@ impl SystemSharedMemoryRegionHandle {
     pub fn get_data(&mut self, size: u64, offset: u64) -> Vec<u8> {
 
         let mut shm_addr: *mut c_char = std::ptr::null_mut();
-        let mut shm_key: *const c_char = unsafe { std::mem::uninitialized() };
+        let mut shm_key: *const c_char = unsafe { mem::MaybeUninit::uninit().assume_init() };
         let mut fd: c_int = 0;
         let mut size_val: size_t = 0;
         let mut offset_val: size_t = 0;
 
-        let result = unsafe { GetSharedMemoryHandleInfo(
+        let _result = unsafe { GetSharedMemoryHandleInfo(
                 self.handle,
                 &mut shm_addr,
                 &mut shm_key,

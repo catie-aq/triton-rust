@@ -10,7 +10,7 @@ use triton_rust::cuda_shared_memory::CudaSharedMemoryRegionHandle;
 use triton_rust::system_shared_memory::SystemSharedMemoryRegionHandle;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut triton_inferer = TritonInference::connect("http://0.0.0.0:8001").unwrap();
+    let mut triton_inferer = TritonInference::connect("http://0.0.0.0:7001").unwrap();
 
     let response = triton_inferer.is_server_ready().unwrap();
     println!("{:?}", response);
@@ -40,7 +40,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let size_of_image_input: u64 = 3 * 512 * 512 * 4;
     let size_of_classes_output: u64 = 4 * 6;
-    let size_of_reg_output: u64 = 4;
+    let size_of_reg_output: u64 = 4 ;
 
     let mut system_mem_zone_input = triton_inferer.create_system_shared_memory("image_input_data", "/image_input_simple", size_of_image_input).unwrap();
     let mut system_mem_zone_output = triton_inferer.create_system_shared_memory("output_data", "/output_simple", size_of_classes_output + size_of_reg_output).unwrap();
@@ -71,7 +71,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let image_input_params = triton_inferer.get_system_shared_memory_params("image_input_data", size_of_image_input, 0);
     infer_inputs.push(triton_inferer.get_infer_input("image_input", "FP32", &[1, 3, 512, 512], image_input_params));
 
-    system_mem_zone_input.copy_array(&rand_image);
+    system_mem_zone_input.copy_array_4(&rand_image);
 
     let mut infer_outputs = Vec::<InferRequestedOutputTensor>::with_capacity(2);
     let class_output_params = triton_inferer.get_system_shared_memory_params("output_data", size_of_classes_output, 0);
