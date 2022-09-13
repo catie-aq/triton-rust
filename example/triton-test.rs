@@ -1,5 +1,5 @@
 use std::error::Error;
-use ndarray::{Array, Array3, Array4};
+use ndarray::{Array, Array3, Array4, Ix4, RawData};
 use std::vec::Vec;
 use std::collections::HashMap;
 
@@ -71,7 +71,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let image_input_params = triton_inferer.get_system_shared_memory_params("image_input_data", size_of_image_input, 0);
     infer_inputs.push(triton_inferer.get_infer_input("image_input", "FP32", &[1, 3, 512, 512], image_input_params));
 
-    system_mem_zone_input.copy_array_4(&rand_image);
+    system_mem_zone_input.copy_array(&rand_image, 0);
 
     let mut infer_outputs = Vec::<InferRequestedOutputTensor>::with_capacity(2);
     let class_output_params = triton_inferer.get_system_shared_memory_params("output_data", size_of_classes_output, 0);

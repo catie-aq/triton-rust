@@ -8,7 +8,7 @@ use std::os::raw::{c_void, c_char, c_int};
 use std::mem;
 use std::slice;
 
-use ndarray::{Array2, Array3, Array4};
+use ndarray::{ArrayBase, RawData, Dimension, Array2, Array3, Array4};
 
 include!(concat!(env!("OUT_DIR"), "/shared_memory_binding.rs"));
 
@@ -53,72 +53,20 @@ impl SystemSharedMemoryRegionHandle {
         };
     }
 
-    pub fn copy_array_4(&mut self, array: &Array4<f32>) {
+    pub fn copy_array<T: RawData, D: Dimension>(&mut self, array: &ArrayBase<T, D>, offset: usize) {
 
-        let byte_size = array.shape().iter().product::<usize>() * mem::size_of::<f32>();
+        let byte_size = array.shape().iter().product::<usize>() * mem::size_of::<T::Elem>();
 
         let _result = unsafe { SharedMemoryRegionSet(
                 self.handle,
-                0,
+                offset as u64,
                 byte_size as u64,
                 array.as_ptr() as *const c_void
             )
         };
     }
 
-    pub fn copy_array_3(&mut self, array: &Array3<f32>) {
-
-        let byte_size = array.shape().iter().product::<usize>() * mem::size_of::<f32>();
-
-        let _result = unsafe { SharedMemoryRegionSet(
-                self.handle,
-                0,
-                byte_size as u64,
-                array.as_ptr() as *const c_void
-            )
-        };
-    }
-
-    pub fn copy_array_2(&mut self, array: &Array2<f32>) {
-
-        let byte_size = array.shape().iter().product::<usize>() * mem::size_of::<f32>();
-
-        let _result = unsafe { SharedMemoryRegionSet(
-                self.handle,
-                0,
-                byte_size as u64,
-                array.as_ptr() as *const c_void
-            )
-        };
-    }
-
-    pub fn copy_array_3_int(&mut self, array: &Array3<i64>) {
-
-        let byte_size = array.shape().iter().product::<usize>() * mem::size_of::<i64>();
-
-        let _result = unsafe { SharedMemoryRegionSet(
-                self.handle,
-                0,
-                byte_size as u64,
-                array.as_ptr() as *const c_void
-            )
-        };
-    }
-
-    pub fn copy_array_2_int(&mut self, array: &Array2<i64>) {
-
-        let byte_size = array.shape().iter().product::<usize>() * mem::size_of::<i64>();
-
-        let _result = unsafe { SharedMemoryRegionSet(
-                self.handle,
-                0,
-                byte_size as u64,
-                array.as_ptr() as *const c_void
-            )
-        };
-    }
-
-    pub fn get_data(&mut self, size: u64, offset: u64) -> Vec<u8> {
+    pub fn get_data<T: Copy>(&mut self, size: u64, offset: u64) -> Vec<T> {
 
         let mut shm_addr: *mut c_char = std::ptr::null_mut();
         let mut shm_key: *const c_char = unsafe { mem::MaybeUninit::uninit().assume_init() };
@@ -140,6 +88,10 @@ impl SystemSharedMemoryRegionHandle {
             slice::from_raw_parts(shm_addr.add(offset.try_into().unwrap()) as *mut u8, size.try_into().unwrap())
         };
 
-        result.to_vec()
+        let result_vec_ref = result.to_vec();
+        let result_vec_ref_T = unsafe { result_vec_ref.align_to::<T>().1 };
+        let result_vec: Vec<T> = result_vec_ref_T.iter().map(|x: &T| *x).collect();
+
+        result_vec
     }
 }

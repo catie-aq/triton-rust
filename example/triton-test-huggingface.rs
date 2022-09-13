@@ -35,8 +35,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mask_input_params = triton_inferer.get_system_shared_memory_params("attention_mask_data", 8*8, 0);
     infer_inputs.push(triton_inferer.get_infer_input("attention_mask", "INT64", &[1, 8], mask_input_params));
 
-    system_mem_zone_ids.copy_array_2_int(&ids);
-    system_mem_zone_mask.copy_array_2_int(&mask);
+    system_mem_zone_ids.copy_array(&ids, 0);
+    system_mem_zone_mask.copy_array(&mask, 0);
 
     let mut infer_outputs = Vec::<InferRequestedOutputTensor>::with_capacity(1);
     let output_params = triton_inferer.get_system_shared_memory_params("output_data", size_of_output, 0);
