@@ -44,10 +44,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let response  = triton_inferer.infer("distilcamembert", "1", "25", infer_inputs, infer_outputs, Vec::<Vec<u8>>::new()).unwrap();
 
-    let output_class = system_mem_zone_output.get_data(size_of_output, 0);
-
-    let array = unsafe { output_class.align_to::<f32>().1 };
-    let array_nd = Array::from_iter(array.iter());
+    let output_class: Vec<f32> = system_mem_zone_output.get_data(size_of_output, 0);
+    let array_nd = Array::from_iter(output_class.iter());
     println!("{:?}", array_nd.into_shape((1,8,768)));
 
     /* Unregister shared memory zone */

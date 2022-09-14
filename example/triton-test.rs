@@ -81,14 +81,14 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let response  = triton_inferer.infer("proditec-efficientnet", "1", "25", infer_inputs, infer_outputs, Vec::<Vec<u8>>::new()).unwrap();
 
-    let output_class = system_mem_zone_output.get_data(size_of_classes_output, 0);
-    let reg_class = system_mem_zone_output.get_data(size_of_reg_output, size_of_classes_output);
+    let output_class: Vec<f32> = system_mem_zone_output.get_data(size_of_classes_output, 0);
+    let reg_class: Vec<f32> = system_mem_zone_output.get_data(size_of_reg_output, size_of_classes_output);
 
     println!("{:?}", output_class);
     println!("{:?}", reg_class);
 
-    println!("{:?}", unsafe { output_class.align_to::<f32>().1 });
-    println!("{:?}", unsafe { reg_class.align_to::<f32>().1 });
+    println!("{:?}", output_class);
+    println!("{:?}", reg_class);
 
     /* Unregister shared memory zone */
     let response = triton_inferer.unregister_system_shared_memory("image_input_data").unwrap();
