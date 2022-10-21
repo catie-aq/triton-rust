@@ -10,6 +10,7 @@ tonic = { version = "0.6.1", features = ["tls"]}
 tokio = { version = "1.0", features = ["macros", "rt-multi-thread"] }
 prost = "0.9.0"
 crossbeam-channel = "0.5.4"
+ndarray-npy = "0.8.1"
 
 [build-dependencies]
 tonic-build = "0.6.0"
@@ -30,3 +31,7 @@ path = "example/triton-test-cuda-shm.rs"
 [[bin]]
 name = "triton-test-huggingface"
 path = "example/triton-test-huggingface.rs"
+
+[[bin]]
+name = "triton-test-decoder"
+path = "example/triton-test-decoder.rs"

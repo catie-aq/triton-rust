@@ -2,3 +2,5 @@
 *.so
 target/
 Cargo.lock
+*.npy
+*.a
