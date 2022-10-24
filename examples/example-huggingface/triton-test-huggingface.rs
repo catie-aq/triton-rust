@@ -24,10 +24,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let mut system_mem_zone_output = triton_inferer.create_system_shared_memory("output_data", "/output_data", size_of_output).unwrap();
 
+    /* Create an array representing some sequence of tokens */
     let ids = Array::from_shape_vec((1, 8), vec![101, 8292, 6895, 9765, 4895, 3231, 999, 102]).unwrap();
     let mask = Array::from_shape_vec((1, 8), vec![1, 1, 1, 1, 1, 1, 1, 1]).unwrap();
 
-    /* Infer using shared memory */
+    /* Infer by transfering data through the shared memory */
     let mut infer_inputs = Vec::<InferInputTensor>::with_capacity(2);
     let ids_input_params = triton_inferer.get_system_shared_memory_params("input_ids_data", 8*8, 0);
     infer_inputs.push(triton_inferer.get_infer_input("input_ids", "INT64", &[1, 8], ids_input_params));
@@ -44,6 +45,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let response  = triton_inferer.infer("distilcamembert", "1", "25", infer_inputs, infer_outputs, Vec::<Vec<u8>>::new()).unwrap();
 
+    /* Parse the output of the model */
     let output_class: Vec<f32> = system_mem_zone_output.get_data(size_of_output, 0);
     let array_nd = Array::from_iter(output_class.iter());
     println!("{:?}", array_nd.into_shape((1,8,768)));

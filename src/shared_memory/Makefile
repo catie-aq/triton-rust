@@ -1,6 +1,7 @@
 CC = g++  # C compiler
 CFLAGS = -Wall -Wextra -O3 -g -I$(CUDA_HOME)/include/
-LDFLAGS = -L/opt/cuda/targets/x86_64-linux/lib/ -lcuda -lcudart -lrt
+CUDA_HOME=/opt/cuda
+LDFLAGS = -L$(CUDA_HOME)/targets/x86_64-linux/lib/ -lcuda -lcudart -lrt
 RM = rm -f   # rm command
 TARGET_LIB = libcudasharedmemory.so
 TARGET_LIB_STATIC = libcudasharedmemory.a

@@ -21,17 +21,5 @@ name = "triton_rust"
 path = "src/triton_rust.rs"
 
 [[bin]]
-name = "triton-test"
-path = "example/triton-test.rs"
-
-[[bin]]
-name = "triton-test-cuda-shm"
-path = "example/triton-test-cuda-shm.rs"
-
-[[bin]]
 name = "triton-test-huggingface"
-path = "example/triton-test-huggingface.rs"
-
-[[bin]]
-name = "triton-test-decoder"
-path = "example/triton-test-decoder.rs"
+path = "examples/example-huggingface/triton-test-huggingface.rs"

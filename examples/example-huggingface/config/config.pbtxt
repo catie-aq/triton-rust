@@ -1,0 +1,38 @@
+name: "distilcamembert"
+platform: "onnxruntime_onnx"
+max_batch_size: 16
+input [
+  {
+    name: "input_ids"
+    data_type: TYPE_INT64
+    dims: [ -1 ]
+  },
+  {
+    name: "attention_mask"
+    data_type: TYPE_INT64
+    dims: [ -1 ]
+  }
+]
+output [
+  {
+    name: "logits"
+    data_type: TYPE_FP32
+    dims: [ -1, 32005 ]
+  }
+]
+dynamic_batching {
+  preferred_batch_size: [ 1,2,4,8,16 ]
+  max_queue_delay_microseconds: 30000
+}
+
+optimization {
+  graph { level: 1 }
+}
+
+instance_group [
+  {
+    count: 1
+    kind: KIND_GPU
+    gpus: [ 0 ]
+  }
+]
