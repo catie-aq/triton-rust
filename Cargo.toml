@@ -16,10 +16,13 @@ ndarray-npy = "0.8.1"
 tonic-build = "0.6.0"
 bindgen = "0.53.1"
 
+[dev-dependencies]
+tokenizers = "0.13.1"
+
 [lib]
 name = "triton_rust"
 path = "src/triton_rust.rs"
 
-[[bin]]
-name = "triton-test-huggingface"
-path = "examples/example-huggingface/triton-test-huggingface.rs"
+[[example]]
+name = "triton-example-huggingface"
+path = "examples/example-huggingface/triton-example-huggingface.rs"

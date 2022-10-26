@@ -1,8 +1,13 @@
 clean:
 	rm -rf *~ dist *.egg-info build target
 
-build:
+lib:
 	cd src/shared_memory && make all && cd ../../
-	maturin build --release --manylinux=off
+	cargo build --release
 
-all: build
+triton-example-huggingface:
+	cargo build --release --example triton-example-huggingface
+
+examples: triton-example-huggingface
+
+all: lib triton-example-huggingface
