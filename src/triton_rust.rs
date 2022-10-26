@@ -48,8 +48,8 @@ same conditions as regards security.
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-B license and that you accept its terms.*/
 
-use std::mem;
-use ndarray::{Array3, Array4};
+use std::{slice, mem};
+use ndarray::{ArrayBase, Data, Dimension};
 
 use tokio::runtime::Runtime;
 use crossbeam_channel::bounded;
@@ -185,13 +185,11 @@ impl TritonInference {
         Ok(response.get_ref().clone())
     }
 
-    pub fn get_input_content_vector(&mut self, input_array: &Array4<f32>) -> Vec<u8> {
+    pub fn get_input_content_from_ndarray<T: Data, D: Dimension>(&mut self, input_array: &ArrayBase<T, D>) -> Vec<u8> {
 
-        let mut tensor_bytes = Vec::<u8>::with_capacity(input_array.shape().iter().product::<usize>() * mem::size_of::<f32>());
-        for float in input_array.iter() {
-            tensor_bytes.extend_from_slice(&float.to_ne_bytes());
-        }
-
+        let bytes_length = input_array.shape().iter().product::<usize>() * mem::size_of::<T::Elem>();
+        let tensor_bytes = unsafe { slice::from_raw_parts(input_array.as_ptr() as *const u8, bytes_length).to_vec() };  
+        
         tensor_bytes
     }
 

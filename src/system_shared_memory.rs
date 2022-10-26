@@ -38,7 +38,7 @@ use std::os::raw::{c_void, c_char, c_int};
 use std::mem;
 use std::slice;
 
-use ndarray::{ArrayBase, RawData, Dimension, Array2, Array3, Array4};
+use ndarray::{ArrayBase, RawData, Dimension};
 
 include!(concat!(env!("OUT_DIR"), "/shared_memory_binding.rs"));
 
