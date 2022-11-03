@@ -8,6 +8,9 @@ lib:
 triton-example-huggingface:
 	cargo build --release --example triton-example-huggingface
 
-examples: triton-example-huggingface
+triton-example-imagenet:
+	cargo build --release --example triton-example-imagenet
 
-all: lib triton-example-huggingface
+examples: triton-example-huggingface triton-example-imagenet
+
+all: lib examples

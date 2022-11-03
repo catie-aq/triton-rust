@@ -18,6 +18,8 @@ bindgen = "0.53.1"
 
 [dev-dependencies]
 tokenizers = "0.13.1"
+image = "0.24.4"
+nshare = {version = "0.9.0", features=["ndarray", "image"]}
 
 [lib]
 name = "triton_rust"
@@ -26,3 +28,7 @@ path = "src/triton_rust.rs"
 [[example]]
 name = "triton-example-huggingface"
 path = "examples/example-huggingface/triton-example-huggingface.rs"
+
+[[example]]
+name = "triton-example-imagenet"
+path = "examples/example-imagenet/triton-example-imagenet.rs"
