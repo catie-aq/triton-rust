@@ -6,13 +6,13 @@ Triton-rust is a gRPC library to interact with [Nvidia Triton Inference Server](
 
 You can compile the library together with all examples with:
 
-```
-make build
+```bash
+make all
 ```
 
 ## Examples
 
-The examples are could be found [here](examples/README.md).
+You can find several examples of neural network inference using Triton Inference Server and Rust. These examples could be found [here](examples/README.md).
 
 ## Known bugs
 
@@ -24,5 +24,6 @@ Boris Albar (b.albar@catie.fr)
 
 ## Ackowledgements
 
- This work has been done in frame of the Vaniila platform.
-[<img src="https://www.vaniila.ai/wp-content/uploads/2020/02/Vaniila_bleu_horizontal.png">](http://vaniila.ai/)
+ This work has been done in frame of the [Vaniila platform](http://vaniila.ai/).
+
+[<img width="200" src="https://www.vaniila.ai/wp-content/uploads/2020/02/Vaniila_bleu_horizontal.png">](http://vaniila.ai/)
