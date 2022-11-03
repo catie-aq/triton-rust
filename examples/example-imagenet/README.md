@@ -21,5 +21,5 @@ make triton-example-imagenet
 ## Running the example
 
 ```bash
-target/release/examples/triton-example-huggingface
+target/release/examples/triton-example-imagenet
 ```

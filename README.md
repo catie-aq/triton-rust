@@ -21,3 +21,8 @@ The examples are could be found [here](examples/README.md).
 ## Contact
 
 Boris Albar (b.albar@catie.fr)
+
+## Ackowledgements
+
+ This work has been done in frame of the Vaniila platform.
+[<img src="https://www.vaniila.ai/wp-content/uploads/2020/02/Vaniila_bleu_horizontal.png">](http://vaniila.ai/)
