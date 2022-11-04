@@ -17,6 +17,7 @@ You can find several examples of neural network inference using Triton Inference
 ## Known bugs
 
 - CUDA shared memory is not functionnal yet
+- Rust's ndarrays are to be in standard layout
 
 ## Contact
 
