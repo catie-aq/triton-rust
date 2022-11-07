@@ -31,7 +31,7 @@ knowledge of the CeCILL-B license and that you accept its terms.*/
 use std::process;
 use std::error::Error;
 use std::vec::Vec;
-use ndarray::{Array, array};
+use ndarray::{array};
 use nshare::ToNdarray3;
 
 use triton_rust::TritonInference;
@@ -65,8 +65,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     /* Normalize the array */
     img_ndarray_f32 = (img_ndarray_f32 - imagenet_mean_broadcasted) / imagenet_std_broadcasted;
     
-    /* Make the memory zone contiguous */
-    img_ndarray_f32 = Array::from_shape_vec(img_ndarray_f32.raw_dim(), img_ndarray_f32.iter().cloned().collect()).unwrap();
+    /* Make the memory zone contiguous in standard layout */
+    let img_ndarray_f32_continuous = img_ndarray_f32.as_standard_layout();
 
     let size_of_image: u64 = 3 * 256 * 256 * 4;
     let output_size: u64 = 1000 * 4;
@@ -81,7 +81,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let input_params = triton_inferer.get_system_shared_memory_params("input_data", size_of_image, 0);
     infer_inputs.push(triton_inferer.get_infer_input("input_data", "FP32", &[3, 256, 256], input_params));
     
-    system_mem_zone_input.copy_array(&img_ndarray_f32, 0);
+    system_mem_zone_input.copy_array(&img_ndarray_f32_continuous, 0);
     
     /* Create output parameters */
     let mut infer_outputs = Vec::<InferRequestedOutputTensor>::with_capacity(1);

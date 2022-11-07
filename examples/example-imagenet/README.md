@@ -5,10 +5,9 @@ This example show you how to use the library to infer a vision
 ## Setting up Triton Inference model
 
 The first step is to convert a vision model to ONNX format.
-We follow for this [this tutorial](https://pytorch.org/tutorials/advanced/super_resolution_with_onnxruntime.html) from PyTorch
-for generating the model.
+You can use [this python script](generate_onnx_resnet.py) to export the model to ONNX. It requires torchvision.
 
-The associated Triton configuration for this model is given [here](config/config.pbtxt)
+The associated Triton configuration for this model is given [here](config/config.pbtxt).
 
 ## Building the example
 
