@@ -1,5 +1,4 @@
 CC = g++  # C compiler
-CUDA_HOME=/opt/cuda
 CFLAGS = -Wall -Wextra -O3 -g -I$(CUDA_HOME)/include/
 LDFLAGS = -L$(CUDA_HOME)/targets/x86_64-linux/lib/ -lcuda -lcudart -lrt
 RM = rm -f   # rm command
