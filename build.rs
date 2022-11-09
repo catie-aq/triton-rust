@@ -35,10 +35,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // build tonic protocol
     tonic_build::compile_protos("proto/triton_grpc.proto")?;
 
-    let prefix = env::var("PREFIX_LIB_CUDASHM").unwrap_or("".to_string());
     // link with shared library
-    println!("cargo:rustc-link-search={}src/shared_memory/", prefix);
-    println!("cargo:rustc-link-search=src/shared_memory/");
+    let manifest_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
+    println!("cargo:rustc-link-search={}/src/shared_memory/", manifest_dir);
     println!("cargo:rustc-link-lib=static=cudasharedmemory");
     println!("cargo:rustc-link-lib=stdc++");
 
