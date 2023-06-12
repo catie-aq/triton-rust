@@ -18,21 +18,22 @@ use std;
 use std::error::Error;
 use std::vec::Vec;
 use std::collections::HashMap;
-/* Copyright CATIE, 2022
+
+/* Copyright CATIE, 2022-2023
 
 b.albar@catie.fr
 
 This software is governed by the CeCILL-B license under French law and
-abiding by the rules of distribution of free software.  You can  use, 
+abiding by the rules of distribution of free software.  You can  use,
 modify and/ or redistribute the software under the terms of the CeCILL-B
 license as circulated by CEA, CNRS and INRIA at the following URL
-"http://www.cecill.info". 
+"http://www.cecill.info".
 
 As a counterpart to the access to the source code and  rights to copy,
 modify and redistribute granted by the license, users are provided only
 with a limited warranty  and the software's author,  the holder of the
 economic rights,  and the successive licensors  have only  limited
-liability. 
+liability.
 
 In this respect, the user's attention is drawn to the risks associated
 with loading,  using,  modifying and/or developing or reproducing the
@@ -41,9 +42,9 @@ that may mean  that it is complicated to manipulate,  and  that  also
 therefore means  that it is reserved for developers  and  experienced
 professionals having in-depth computer knowledge. Users are therefore
 encouraged to load and test the software's suitability as regards their
-requirements in conditions enabling the security of their systems and/or 
-data to be ensured and,  more generally, to use and operate it in the 
-same conditions as regards security. 
+requirements in conditions enabling the security of their systems and/or
+data to be ensured and,  more generally, to use and operate it in the
+same conditions as regards security.
 
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-B license and that you accept its terms.*/
@@ -188,12 +189,12 @@ impl TritonInference {
     pub fn get_input_content_from_ndarray<T: Data, D: Dimension>(&mut self, input_array: &ArrayBase<T, D>) -> Vec<u8> {
 
         let bytes_length = input_array.shape().iter().product::<usize>() * mem::size_of::<T::Elem>();
-        let tensor_bytes = unsafe { slice::from_raw_parts(input_array.as_ptr() as *const u8, bytes_length).to_vec() };  
-        
+        let tensor_bytes = unsafe { slice::from_raw_parts(input_array.as_ptr() as *const u8, bytes_length).to_vec() };
+
         tensor_bytes
     }
 
-    pub fn create_cuda_shared_memory(&mut self, name: &'static str, size: u64, device_id: i64) -> Result<cuda_shared_memory::CudaSharedMemoryRegionHandle,  Box<dyn Error>> {
+    pub fn create_cuda_shared_memory(&mut self, name: &'static str, size: usize, device_id: i64) -> Result<cuda_shared_memory::CudaSharedMemoryRegionHandle,  Box<dyn Error>> {
 
         let mut cuda_handle = cuda_shared_memory::CudaSharedMemoryRegionHandle::create(name, size, device_id);
         let cuda_raw_handle = cuda_handle.get_raw_handle();
@@ -203,7 +204,7 @@ impl TritonInference {
                 name: name.to_string(),
                 raw_handle: cuda_raw_handle,
                 device_id: device_id,
-                byte_size: size
+                byte_size: (size as u64)
             }
         );
 
@@ -256,7 +257,7 @@ impl TritonInference {
         Ok(response.get_ref().clone())
     }
 
-    pub fn create_system_shared_memory(&mut self, name: &'static str, key: &'static str, size: u64) -> Result<system_shared_memory::SystemSharedMemoryRegionHandle,  Box<dyn Error>> {
+    pub fn create_system_shared_memory(&mut self, name: &'static str, key: &'static str, size: usize) -> Result<system_shared_memory::SystemSharedMemoryRegionHandle,  Box<dyn Error>> {
 
         let shm_handle = system_shared_memory::SystemSharedMemoryRegionHandle::create(name, key, size);
 
@@ -265,7 +266,7 @@ impl TritonInference {
                 name: name.to_string(),
                 key: key.to_string(),
                 offset: 0,
-                byte_size: size
+                byte_size: (size as u64)
             }
         );
 

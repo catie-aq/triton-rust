@@ -1,18 +1,18 @@
-/* Copyright CATIE, 2022
+/* Copyright CATIE, 2022-2023
 
 b.albar@catie.fr
 
 This software is governed by the CeCILL-B license under French law and
-abiding by the rules of distribution of free software.  You can  use, 
+abiding by the rules of distribution of free software.  You can  use,
 modify and/ or redistribute the software under the terms of the CeCILL-B
 license as circulated by CEA, CNRS and INRIA at the following URL
-"http://www.cecill.info". 
+"http://www.cecill.info".
 
 As a counterpart to the access to the source code and  rights to copy,
 modify and redistribute granted by the license, users are provided only
 with a limited warranty  and the software's author,  the holder of the
 economic rights,  and the successive licensors  have only  limited
-liability. 
+liability.
 
 In this respect, the user's attention is drawn to the risks associated
 with loading,  using,  modifying and/or developing or reproducing the
@@ -21,9 +21,9 @@ that may mean  that it is complicated to manipulate,  and  that  also
 therefore means  that it is reserved for developers  and  experienced
 professionals having in-depth computer knowledge. Users are therefore
 encouraged to load and test the software's suitability as regards their
-requirements in conditions enabling the security of their systems and/or 
-data to be ensured and,  more generally, to use and operate it in the 
-same conditions as regards security. 
+requirements in conditions enabling the security of their systems and/or
+data to be ensured and,  more generally, to use and operate it in the
+same conditions as regards security.
 
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-B license and that you accept its terms.*/
@@ -49,7 +49,7 @@ pub struct SystemSharedMemoryRegionHandle {
 }
 
 impl SystemSharedMemoryRegionHandle {
-    pub fn create(triton_shm_name: &'static str, shm_key: &'static str, size: u64) -> Self {
+    pub fn create(triton_shm_name: &'static str, shm_key: &'static str, size: usize) -> Self {
 
         let c_triton_shm_name = CString::new(triton_shm_name).unwrap();
         let c_shm_key = CString::new(shm_key).unwrap();
@@ -89,8 +89,8 @@ impl SystemSharedMemoryRegionHandle {
 
         let _result = unsafe { SharedMemoryRegionSet(
                 self.handle,
-                offset as u64,
-                byte_size as u64,
+                offset,
+                byte_size,
                 array.as_ptr() as *const c_void
             )
         };
@@ -99,15 +99,15 @@ impl SystemSharedMemoryRegionHandle {
     pub fn get_data<T: Copy>(&mut self, size: u64, offset: u64) -> Vec<T> {
 
         let mut shm_addr: *mut c_char = std::ptr::null_mut();
-        let mut shm_key: *const c_char = unsafe { mem::MaybeUninit::uninit().assume_init() };
+        let mut shm_key = mem::MaybeUninit::<*const c_char>::uninit();
         let mut fd: c_int = 0;
-        let mut size_val: size_t = 0;
-        let mut offset_val: size_t = 0;
+        let mut size_val: usize = 0;
+        let mut offset_val: usize = 0;
 
         let _result = unsafe { GetSharedMemoryHandleInfo(
                 self.handle,
                 &mut shm_addr,
-                &mut shm_key,
+                shm_key.as_mut_ptr(),
                 &mut fd,
                 &mut size_val,
                 &mut offset_val
